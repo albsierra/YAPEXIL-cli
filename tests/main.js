@@ -12,7 +12,7 @@ describe('YAPEXIL validate test', function() {
                 return execShellCommand(`YAPEXIL --validate --dir ./resources --filename  ${file} --silent`)
 
             }));
-
+            console.log(f)
             filenames.forEach((element, index) => {
                 if (element.indexOf("correct") != -1 && f[index] != 0) {
                     expect(false).to.equal(true)
@@ -28,6 +28,7 @@ describe('YAPEXIL validate test', function() {
 
                 }
             });
+
             expect(true).to.equal(true)
 
 

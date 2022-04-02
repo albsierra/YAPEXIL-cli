@@ -108,7 +108,7 @@ var promise = (new Promise((resolve, reject) => {
                         throw 'Invalid Exercise';
                     }
                     //console.log(programmingExercise.solutions)
-                    fs.readFile(argv.dir, function(err, data) {
+                    fs.readFile(path.join(argv.dir, argv.filename), function(err, data) {
                         if (err) throw err;
                         JSZip.loadAsync(data).then(function(zip) {
                             const pSolutions = new Array();
@@ -210,11 +210,13 @@ var promise = (new Promise((resolve, reject) => {
                         });
                     });
                 }).catch((err) => {
+                    console.log(err)
                     if (!argv.silent)
                         message("ERROR!!!", "The YAPEXIL exercise is invalid", "red", "black")
                     resolve(1);
                 });
             } catch (err) {
+                console.log(err)
                 if (!argv.silent)
                     message("ERROR!!!", "The YAPEXIL exercise is invalid", "red", "black")
                 resolve(1);
