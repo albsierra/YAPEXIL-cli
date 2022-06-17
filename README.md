@@ -8,14 +8,22 @@ _YAPEXIL_ is a _JSON_ format in which the goal is to represent in an orthodoxy m
 
 - Packaging of exercises
 - Validation of a zip that represent an YAPEXIL exercise
+## Instaling
+First download the repository. Then in the folder where the package.json exists, run
+```js
+sudo npm i --location=global
+```
 
 ## Examples
 ### Validating an zip file 
 ```js
-YAPEXIL --validate --dir be3bf258-895f-4f5b-bbe9-b716d75f4261.zip --silent
+YAPEXIL --validate --dir ./ --filename c9d68b4f-e306-41f5-bba3-cafdcd024bfb.zip 
 ```
-In the shell execute the program above to validate a zip file. The flag --validate --dir are mandatory.
-The --silent flag changes how the output of this program will be generated. If the flag is present then the ouput will be 0 for correct exercises 1 for wrong exersices and 2 when the exercise is correct but the zip file contain more files than the required
+```js
+YAPEXIL --validate --dir "file directory" --filename "file name"
+```
+
+
 Ex:
 ![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/error.png)
 ![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success.png)
@@ -23,12 +31,12 @@ Ex:
 
 ### Packaging an exercise
 ```js
-YAPEXIL  --create --dir ./metadata.json --out ~ --base http://localhost/YAPEXIL
-or
-YAPEXIL  --create --dir ./metadata.json --out ~ --base /mnt/c/xampp/htdocs/YAPEXIL
+YAPEXIL --create --dir ./resources/metadata.json  --out ./ --base /mnt/c/Users/marco/Documents/TESTE
 ```
-In the shell execute the program above to packaging an exercise. The flag --create --dir and --base are mandatory.
-The --base flag can be an remote repository or a local one. Inside this repository must exist the files indicated by the metadata.json
+```js
+YAPEXIL --create --dir "meta file for the exercise"  --out "exercise zip output" --base "folder containing the necessary files for packaging a YAPEXIL exercise"
+```
+
 Ex: The file metada.json contain the following:
 ```json
 {
@@ -59,8 +67,8 @@ Ex: The file metada.json contain the following:
         "arguments": [],
         "weight": 5,
         "visible": true,
-        "input": "input1.txt",
-        "output": "output1.txt"
+        "input": "input.txt",
+        "output": "output.txt"
     }],
     "statements": [{
         "id": "00000000-0000-0000-0000-000000000000",
@@ -71,11 +79,11 @@ Ex: The file metada.json contain the following:
 }
 ```
 
-Then inside the repository .../YAPEXIL must exist the files:
+Then inside the repository --base  must exist the files:
 ```json
 total 0
--rwxrwxrwx 1 marco marco  66 Mar 23 18:49 input1.txt
--rwxrwxrwx 1 marco marco  67 Mar 23 18:50 output1.txt
+-rwxrwxrwx 1 marco marco  66 Mar 23 18:49 input.txt
+-rwxrwxrwx 1 marco marco  67 Mar 23 18:50 output.txt
 -rwxrwxrwx 1 marco marco  68 Mar 23 18:50 solution.txt
 -rwxrwxrwx 1 marco marco 387 Mar 23 18:50 statement.txt
 ```

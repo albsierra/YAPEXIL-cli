@@ -16,7 +16,7 @@ var promise = (new Promise((resolve, reject) => {
 
 
     yargs.command('$0', 'YAPEXIL generator', () => {
-        // message("YAPEXIL CLI", "Welcome", "green", "black")
+        message("YAPEXIL CLI", "Welcome", "green", "black")
     }, async(argv) => {
         out = argv.out;
         if ("create" in argv) {
@@ -33,70 +33,61 @@ var promise = (new Promise((resolve, reject) => {
             if (argv.base.indexOf("http://") != -1 || argv.base.indexOf("https://") != -1) {
                 arr = await axios.all(exercise.solutions.map((value) => axios.get(`${argv.base}/${value.pathname}`)))
 
-            } else exercise.solutions.map((value) =>
-                arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}'))
-                //  console.log('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}')
-            );
-            for (let response of arr) {
-                solutionsContents.push(response.data)
-            }
+            } else {
+                //**-------------------------------------------------------------------------------------------------------**//
+                exercise.solutions.map((value) =>
+                    arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}'))
+                    //  console.log('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}')
+                );
+                for (let response of arr) {
+                    solutionsContents.push(response.data)
+                }
 
-            exercise.solutions_contents = []
-            for (let data of solutionsContents) {
-                exercise.solutions_contents[data.id] = data.content
-            }
-
-
-
-            if (argv.base.indexOf("http://") != -1 || argv.base.indexOf("https://") != -1) {
-                arr = await axios.all(exercise.tests.map((value) => axios.get(`${argv.base}/${value.input}`)))
-
-            } else
+                exercise.solutions_contents = []
+                for (let data of solutionsContents) {
+                    exercise.solutions_contents[data.id] = data.content
+                }
+                arr = [];
+                //**-------------------------------------------------------------------------------------------------------**//
                 exercise.tests.map((value) =>
                     arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.input}`, { encoding: 'utf8', flag: 'r' }) + '}')));
-
-
-            for (let response of arr) {
-                testsContentsIn.push(response.data)
-            }
-            exercise.tests_contents_in = []
-            for (let data of testsContentsIn) {
-                exercise.tests_contents_in[data.id] = data.content
-            }
-
-
-            if (argv.base.indexOf("http://") != -1 || argv.base.indexOf("https://") != -1) {
-                arr = await axios.all(exercise.tests.map((value) => axios.get(`${argv.base}/${value.output}`)))
-
-
-            } else
+                for (let response of arr) {
+                    testsContentsIn.push(response.data)
+                }
+                exercise.tests_contents_in = []
+                for (let data of testsContentsIn) {
+                    exercise.tests_contents_in[data.id] = data.content
+                }
+                arr = [];
+                //**-------------------------------------------------------------------------------------------------------**//
                 exercise.tests.map((value) =>
                     arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.output}`, { encoding: 'utf8', flag: 'r' }) + '}')));
 
-            for (let response of arr) {
-                testsContentsOut.push(response.data)
-            }
-            exercise.tests_contents_out = []
-            for (let data of testsContentsOut) {
-                exercise.tests_contents_out[data.id] = data.content
-            }
+                for (let response of arr) {
+                    testsContentsOut.push(response.data)
+                }
+                exercise.tests_contents_out = []
+                for (let data of testsContentsOut) {
+                    exercise.tests_contents_out[data.id] = data.content
+                }
+                arr = [];
+                //**-------------------------------------------------------------------------------------------------------**//
 
-
-            if (argv.base.indexOf("http://") != -1 || argv.base.indexOf("https://") != -1) {
-                arr = await axios.all(exercise.statements.map((value) => axios.get(`${argv.base}/${value.pathname}`)))
-
-            } else
                 exercise.statements.forEach((value) =>
                     arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}')));
 
-            for (let response of arr) {
-                statementsContent.push(response.data)
-            }
-            exercise.statements_contents = []
-            for (let data of statementsContent) {
-                exercise.statements_contents[data.id] = data.content
-            }
+                for (let response of arr) {
+                    statementsContent.push(response.data)
+                }
+                exercise.statements_contents = []
+                for (let data of statementsContent) {
+                    exercise.statements_contents[data.id] = data.content
+                }
+                arr = [];
+                //**-------------------------------------------------------------------------------------------------------**//
 
+
+            }
 
             resolve(exercise);
         } else if ("validate" in argv) {
@@ -171,16 +162,12 @@ var promise = (new Promise((resolve, reject) => {
                                     }
                                 }
 
-
-
                             })
 
                             if (programmingExercise.solutions.length * 2 != solutionsArchiveCount) {
                                 warning = true
                                 text += `There is more files in solutions folder than declared\n`
-
                             }
-
                             if (programmingExercise.statements.length * 2 != statementArchiveCount) {
                                 warning = true
 
