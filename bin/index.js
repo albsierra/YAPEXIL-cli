@@ -28,7 +28,6 @@ var promise = (new Promise((resolve, reject) => {
             if(result) resolve(result);
         } else if ("import" in argv) {
             if (from = argv.from) {
-                message("Creating metadata.json from: " + from)
                 getMetadatas(from).forEach(metadata => {
                     
                 }); 
@@ -286,4 +285,11 @@ async function validateSerializedExercise(argv) {
         return(1);
     }
 
+}
+
+function getMetadatas(from) {
+    message("Creating metadata.json from: " + from)
+    let metadatas = []
+    // open spreadsheet
+    return metadatas
 }
