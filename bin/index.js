@@ -11,6 +11,8 @@ var JSZip = require("jszip");
 const path = require("path");
 const { files } = require('jszip');
 const { create } = require('domain');
+const uuid = require('uuid');
+var XLSX = require("yxw-xlsx");
 
 var out;
 var promise = (new Promise((resolve, reject) => {
@@ -19,6 +21,7 @@ var promise = (new Promise((resolve, reject) => {
     yargs.command('$0', 'YAPEXIL generator', () => {
         message("YAPEXIL CLI", "Welcome", "green", "black")
     }, async(argv) => {
+        await loadSchemaYAPEXIL();
         out = argv.out;
         if ("create" in argv) {
             const exercise = await createFromMetadata(argv)
@@ -28,9 +31,23 @@ var promise = (new Promise((resolve, reject) => {
             if(result) resolve(result);
         } else if ("import" in argv) {
             if (from = argv.from) {
-                getMetadatas(from).forEach(metadata => {
-                    
-                }); 
+                let metadatas = getMetadatas(argv)
+                let exercisesP = []
+                metadatas.forEach((metadata) => {
+                    let argvCreate = {
+                        _: [],
+                        create: true,
+                        dir: path.join(argv.out, metadata.id, 'metadata.json'),
+                        out: argv.out,
+                        base: path.join(argv.out, metadata.id),
+                        '$0': 'YAPEXIL'
+                      }
+                    exercisesP.push(createFromMetadata(argvCreate))
+                })
+                Promise.all(exercisesP).then(exercises => {
+                    if(exercises.length > 0)
+                        resolve(exercises.length)
+                })
             }
         }
 
@@ -44,8 +61,6 @@ var promise = (new Promise((resolve, reject) => {
 promise.then((result) => {
     if (!Number.isInteger(result)) {
         message("Success", "The YAPEXIL exercise was created", "yellow", "black")
-
-        result.serialize(out == undefined ? "~" : out)
     } else {
         console.log(result)
     }
@@ -96,7 +111,6 @@ function getUUID(str) {
 async function createFromMetadata(argv) {
     let data = fs.readFileSync(argv.dir, { encoding: 'utf8', flag: 'r' });
     data = JSON.parse(data)
-    await loadSchemaYAPEXIL();
     var exercise = new ProgrammingExercise(data)
     var arr = [],
         solutionsContents = [],
@@ -162,6 +176,8 @@ async function createFromMetadata(argv) {
 
 
     }
+
+    exercise.serialize(argv.out == undefined ? "~" : argv.out)
     return exercise
 }
 
@@ -287,9 +303,116 @@ async function validateSerializedExercise(argv) {
 
 }
 
-function getMetadatas(from) {
-    message("Creating metadata.json from: " + from)
+function getMetadatas(argv) {
     let metadatas = []
-    // open spreadsheet
+    message("Creating metadata.json from: ", argv.from)
+    let read_opts = { // https://docs.sheetjs.com/docs/api/parse-options/
+        sheetRows: 3
+    }
+    var workbook = XLSX.readFile(argv.from, read_opts);
+    let json_opts = {} //https://docs.sheetjs.com/docs/api/utilities/#array-of-objects-input
+    var jsonExercises = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], json_opts);
+
+    jsonExercises.forEach((jsonExercise) => {
+        const uuidExercise = uuid.v4()
+        const uuidPath = path.join(argv.out, uuidExercise)
+        fs.mkdirSync(uuidPath)
+        metadatas.push(parseJsonExercise(jsonExercise, uuidExercise, uuidPath))
+    })
     return metadatas
+}
+
+function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
+    const currentTime = (new Date()).toISOString();
+    let metadata = {
+        id: uuidExercise, // "c9d68b4f-e306-41f5-bba3-cafdcd024bfb",
+        title: jsonExercise.question_txt.substring(0,20), // "Selecting all links to Google within a document",
+        module: "",
+        owner: "JuezLTI Erasmus+",
+        keywords: [],
+        type: "BLANK_SHEET",
+        event: "",
+        platform: "PostgreSQL",
+        difficulty: "EASY",
+        status: "DRAFT",
+        timeout: 0,
+        programmingLanguages: [
+            "SQL-DQL"
+        ],
+        created_at: currentTime, // "2021-12-11T17:21:06.419Z",
+        updated_at: currentTime, // "2021-12-11T17:21:06.419Z",
+        author: "JuezLTI",
+        solutions: getSolutions(jsonExercise, uuidPath),
+
+        tests: getTests(jsonExercise, uuidPath),
+
+        statements: getStatements(jsonExercise, uuidPath),
+
+        libraries: getLibraries(jsonExercise, uuidPath)
+    }
+    const metadataPath = path.join(uuidPath, "metadata.json")
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata))
+
+    return metadata
+}
+
+function getSolutions(jsonExercise, uuidPath) {
+    const solutionPath = path.join(uuidPath, "solution.txt")
+    const idSolution = uuid.v4()
+    let fileContent =  `{"id": "${idSolution}","content":"${jsonExercise.question_solution.replace(/"/g, '\\\"')}"}`
+    fs.writeFileSync(solutionPath, fileContent)
+    let solutions = [{
+        id: idSolution,
+        pathname: "solution.txt",
+        lang: "pqsql"
+    }]
+    return solutions
+}
+
+function getTests(jsonExercise, uuidPath) {
+    const idTest = uuid.v4()
+    const inputPath = path.join(uuidPath, "in.txt")
+    const inContent = jsonExercise.question_probe.length > 0 ? jsonExercise.question_probe.replace(/"/g, '\\\"') : '-- '
+    let fileContent =  `{"id": "${idTest}","content":"${inContent}"}`
+    fs.writeFileSync(inputPath, fileContent)
+
+    const outputPath = path.join(uuidPath, "out.txt")
+    // TODO change question_txt to question_output
+    fileContent =  `{"id": "${idTest}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    fs.writeFileSync(outputPath, fileContent)
+    let tests= [{
+        id: idTest,
+        arguments: [],
+        weight: 5,
+        visible: true,
+        input: "in.txt",
+        output: "out.txt",
+        feedback: []
+    }]
+    return tests
+}
+
+function getStatements(jsonExercise, uuidPath) {
+    const statementPath = path.join(uuidPath, "statement.txt")
+    const idStatement = uuid.v4()
+    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    fs.writeFileSync(statementPath, fileContent)
+    let statements = [{
+            id: idStatement,
+            pathname: "statement.txt",
+            nat_lang: "es",
+            format: "HTML"
+        }]
+    return statements
+}
+
+function getLibraries(jsonExercise, uuidPath) {
+    const librariesPath = path.join(uuidPath, "library.txt")
+    const idLibraries = uuid.v4()
+    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.question_onfly.replace(/"/g, '\\\"')}"}`
+    fs.writeFileSync(librariesPath, fileContent)
+    let libraries = [{
+        id: idLibraries,
+        pathname: "library.txt"
+    }]
 }
