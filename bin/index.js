@@ -116,7 +116,8 @@ async function createFromMetadata(argv) {
         solutionsContents = [],
         testsContentsIn = [],
         testsContentsOut = [],
-        statementsContent = []
+        statementsContent = [],
+        librariesContent = []
 
     if (argv.base.indexOf("http://") != -1 || argv.base.indexOf("https://") != -1) {
         arr = await axios.all(exercise.solutions.map((value) => axios.get(`${argv.base}/${value.pathname}`)))
@@ -170,6 +171,19 @@ async function createFromMetadata(argv) {
         exercise.statements_contents = []
         for (let data of statementsContent) {
             exercise.statements_contents[data.id] = data.content
+        }
+        arr = [];
+        //**-------------------------------------------------------------------------------------------------------**//
+
+        exercise.libraries.forEach((value) =>
+            arr.push(JSON.parse('{"data":' + fs.readFileSync(`${argv.base}/${value.pathname}`, { encoding: 'utf8', flag: 'r' }) + '}')));
+
+        for (let response of arr) {
+            librariesContent.push(response.data)
+        }
+        exercise.libraries_contents = []
+        for (let data of librariesContent) {
+            exercise.libraries_contents[data.id] = data.content
         }
         arr = [];
         //**-------------------------------------------------------------------------------------------------------**//
@@ -413,6 +427,8 @@ function getLibraries(jsonExercise, uuidPath) {
     fs.writeFileSync(librariesPath, fileContent)
     let libraries = [{
         id: idLibraries,
-        pathname: "library.txt"
+        pathname: "library.txt",
+        type: "EMBEDDABLE"
     }]
+    return libraries
 }
