@@ -17,7 +17,9 @@
         "chalk-animation": "^1.6.0",
         "jszip": "^3.8.0",
         "programming-exercise-juezlti": "^1.1.2",
-        "yargs": "^13.3.2"
+        "uuid": "^8.3.2",
+        "yargs": "^13.3.2",
+        "yxw-xlsx": "^1.0.1"
     },
     "devDependencies": {
         "chai": "^4.3.6",
