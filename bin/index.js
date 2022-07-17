@@ -211,9 +211,11 @@ async function validateSerializedExercise(argv) {
                     const pSolutions = new Array();
                     const pStatments = new Array();
                     const pTests = new Array();
+                    const pLibraries = new Array();
                     var solutionsArchiveCount = 0;
                     var statementArchiveCount = 0;
                     var testsArchiveCount = 0;
+                    var librariesArchiveCount = 0;
 
                     var warning = false;
                     var text = ""
@@ -231,11 +233,19 @@ async function validateSerializedExercise(argv) {
                         pTests.push(tests.id)
 
                     })
+                    programmingExercise.libraries.forEach((library, index) => {
+                        pLibraries.push(library.id)
+
+                    })
                     files.forEach((element, index) => {
                         if (element != "metadata.json") {
-                            if (element.indexOf("solutions/") == -1 && element.indexOf("statements/") == -1 && element.indexOf("tests/") == -1) {
+                            if (element.indexOf("solutions/") == -1
+                                && element.indexOf("statements/") == -1
+                                && element.indexOf("tests/") == -1
+                                && element.indexOf("libraries/") == -1
+                                ) {
                                 warning = true
-                                text += `There is files in the root folder that differ from solutions/  statements/  tests/`
+                                text += `There is files in the root folder that differ from solutions/ statements/ tests/ libraries/`
                             }
 
                             if (element != "solutions/" && element.indexOf("solutions/") != -1) {
@@ -266,6 +276,16 @@ async function validateSerializedExercise(argv) {
                                     testsArchiveCount++
 
                             }
+
+                            if (element != "libraries/" && element.indexOf("libraries/") != -1) {
+                                if (!pLibraries.includes(getUUID(element))) {
+                                    warning = true
+                                    text += `There is library with UUID ${element} declared in the meta file \n`
+                                }
+                                if (element.length > 47)
+                                    librariesArchiveCount++;
+                                //console.log(element)
+                            }
                         }
 
                     })
@@ -287,6 +307,10 @@ async function validateSerializedExercise(argv) {
                         warning = true
                         text += `There are more tests in the tests folder than declared \n`
 
+                    }
+                    if (programmingExercise.libraries.length * 2 != librariesArchiveCount) {
+                        warning = true
+                        text += `There is more files in solutions folder than declared\n`
                     }
 
                     if (warning) {
