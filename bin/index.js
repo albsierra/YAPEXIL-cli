@@ -365,19 +365,17 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
     const currentTime = (new Date()).toISOString();
     let metadata = {
         id: uuidExercise, // "c9d68b4f-e306-41f5-bba3-cafdcd024bfb",
-        title: jsonExercise.question_txt.substring(0,20), // "Selecting all links to Google within a document",
-        module: "",
+        title: jsonExercise.title, // "Selecting all links to Google within a document",
+        module: jsonExercise.module,
         owner: "JuezLTI Erasmus+",
-        keywords: [],
+        keywords: jsonExercise.keywords.split(','),
         type: "BLANK_SHEET",
         event: "",
         platform: "PostgreSQL",
         difficulty: "EASY",
         status: "DRAFT",
         timeout: 0,
-        programmingLanguages: [
-            "SQL-DQL"
-        ],
+        programmingLanguages: jsonExercise.programmingLanguages.split(','),
         created_at: currentTime, // "2021-12-11T17:21:06.419Z",
         updated_at: currentTime, // "2021-12-11T17:21:06.419Z",
         author: "JuezLTI",
@@ -398,12 +396,12 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
 function getSolutions(jsonExercise, uuidPath) {
     const solutionPath = path.join(uuidPath, "solution.txt")
     const idSolution = uuid.v4()
-    let fileContent =  `{"id": "${idSolution}","content":"${jsonExercise.question_solution.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idSolution}","content":"${jsonExercise.solution.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(solutionPath, fileContent)
     let solutions = [{
         id: idSolution,
         pathname: "solution.txt",
-        lang: "pqsql"
+        lang: jsonExercise.solutionLang
     }]
     return solutions
 }
@@ -411,13 +409,13 @@ function getSolutions(jsonExercise, uuidPath) {
 function getTests(jsonExercise, uuidPath) {
     const idTest = uuid.v4()
     const inputPath = path.join(uuidPath, "in.txt")
-    const inContent = jsonExercise.question_probe.length > 0 ? jsonExercise.question_probe.replace(/"/g, '\\\"') : '-- '
+    const inContent = jsonExercise.testIn?.length > 0 ? jsonExercise.testIn.replace(/"/g, '\\\"') : '-- '
     let fileContent =  `{"id": "${idTest}","content":"${inContent}"}`
     fs.writeFileSync(inputPath, fileContent)
 
     const outputPath = path.join(uuidPath, "out.txt")
-    // TODO change question_txt to question_output
-    fileContent =  `{"id": "${idTest}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    const outContent = jsonExercise.testOut?.length > 0 ? jsonExercise.testOut.replace(/"/g, '\\\"') : ''
+    fileContent =  `{"id": "${idTest}","content":"${outContent}"}`
     fs.writeFileSync(outputPath, fileContent)
     let tests= [{
         id: idTest,
@@ -434,7 +432,7 @@ function getTests(jsonExercise, uuidPath) {
 function getStatements(jsonExercise, uuidPath) {
     const statementPath = path.join(uuidPath, "statement.txt")
     const idStatement = uuid.v4()
-    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.statement.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(statementPath, fileContent)
     let statements = [{
             id: idStatement,
@@ -448,7 +446,7 @@ function getStatements(jsonExercise, uuidPath) {
 function getLibraries(jsonExercise, uuidPath) {
     const librariesPath = path.join(uuidPath, "library.txt")
     const idLibraries = uuid.v4()
-    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.question_onfly.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(librariesPath, fileContent)
     let libraries = [{
         id: idLibraries,
