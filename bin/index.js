@@ -211,9 +211,11 @@ async function validateSerializedExercise(argv) {
                     const pSolutions = new Array();
                     const pStatments = new Array();
                     const pTests = new Array();
+                    const pLibraries = new Array();
                     var solutionsArchiveCount = 0;
                     var statementArchiveCount = 0;
                     var testsArchiveCount = 0;
+                    var librariesArchiveCount = 0;
 
                     var warning = false;
                     var text = ""
@@ -231,11 +233,19 @@ async function validateSerializedExercise(argv) {
                         pTests.push(tests.id)
 
                     })
+                    programmingExercise.libraries.forEach((library, index) => {
+                        pLibraries.push(library.id)
+
+                    })
                     files.forEach((element, index) => {
                         if (element != "metadata.json") {
-                            if (element.indexOf("solutions/") == -1 && element.indexOf("statements/") == -1 && element.indexOf("tests/") == -1) {
+                            if (element.indexOf("solutions/") == -1
+                                && element.indexOf("statements/") == -1
+                                && element.indexOf("tests/") == -1
+                                && element.indexOf("libraries/") == -1
+                                ) {
                                 warning = true
-                                text += `There is files in the root folder that differ from solutions/  statements/  tests/`
+                                text += `There is files in the root folder that differ from solutions/ statements/ tests/ libraries/`
                             }
 
                             if (element != "solutions/" && element.indexOf("solutions/") != -1) {
@@ -266,6 +276,16 @@ async function validateSerializedExercise(argv) {
                                     testsArchiveCount++
 
                             }
+
+                            if (element != "libraries/" && element.indexOf("libraries/") != -1) {
+                                if (!pLibraries.includes(getUUID(element))) {
+                                    warning = true
+                                    text += `There is library with UUID ${element} declared in the meta file \n`
+                                }
+                                if (element.length > 47)
+                                    librariesArchiveCount++;
+                                //console.log(element)
+                            }
                         }
 
                     })
@@ -287,6 +307,10 @@ async function validateSerializedExercise(argv) {
                         warning = true
                         text += `There are more tests in the tests folder than declared \n`
 
+                    }
+                    if (programmingExercise.libraries.length * 2 != librariesArchiveCount) {
+                        warning = true
+                        text += `There is more files in solutions folder than declared\n`
                     }
 
                     if (warning) {
@@ -318,10 +342,11 @@ async function validateSerializedExercise(argv) {
 }
 
 function getMetadatas(argv) {
-    let metadatas = []
+    let metadatas = [],
+        rows = argv.rows ? argv.rows : 0
     message("Creating metadata.json from: ", argv.from)
     let read_opts = { // https://docs.sheetjs.com/docs/api/parse-options/
-        sheetRows: 3
+        sheetRows: rows
     }
     var workbook = XLSX.readFile(argv.from, read_opts);
     let json_opts = {} //https://docs.sheetjs.com/docs/api/utilities/#array-of-objects-input
@@ -340,19 +365,17 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
     const currentTime = (new Date()).toISOString();
     let metadata = {
         id: uuidExercise, // "c9d68b4f-e306-41f5-bba3-cafdcd024bfb",
-        title: jsonExercise.question_txt.substring(0,20), // "Selecting all links to Google within a document",
-        module: "",
+        title: jsonExercise.title, // "Selecting all links to Google within a document",
+        module: jsonExercise.module,
         owner: "JuezLTI Erasmus+",
-        keywords: [],
+        keywords: jsonExercise.keywords.split(','),
         type: "BLANK_SHEET",
         event: "",
         platform: "PostgreSQL",
         difficulty: "EASY",
         status: "DRAFT",
         timeout: 0,
-        programmingLanguages: [
-            "SQL-DQL"
-        ],
+        programmingLanguages: jsonExercise.programmingLanguages.split(','),
         created_at: currentTime, // "2021-12-11T17:21:06.419Z",
         updated_at: currentTime, // "2021-12-11T17:21:06.419Z",
         author: "JuezLTI",
@@ -373,12 +396,12 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
 function getSolutions(jsonExercise, uuidPath) {
     const solutionPath = path.join(uuidPath, "solution.txt")
     const idSolution = uuid.v4()
-    let fileContent =  `{"id": "${idSolution}","content":"${jsonExercise.question_solution.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idSolution}","content":"${jsonExercise.solution.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(solutionPath, fileContent)
     let solutions = [{
         id: idSolution,
         pathname: "solution.txt",
-        lang: "pqsql"
+        lang: jsonExercise.solutionLang
     }]
     return solutions
 }
@@ -386,13 +409,13 @@ function getSolutions(jsonExercise, uuidPath) {
 function getTests(jsonExercise, uuidPath) {
     const idTest = uuid.v4()
     const inputPath = path.join(uuidPath, "in.txt")
-    const inContent = jsonExercise.question_probe.length > 0 ? jsonExercise.question_probe.replace(/"/g, '\\\"') : '-- '
+    const inContent = jsonExercise.testIn?.length > 0 ? jsonExercise.testIn.replace(/"/g, '\\\"') : '-- '
     let fileContent =  `{"id": "${idTest}","content":"${inContent}"}`
     fs.writeFileSync(inputPath, fileContent)
 
     const outputPath = path.join(uuidPath, "out.txt")
-    // TODO change question_txt to question_output
-    fileContent =  `{"id": "${idTest}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    const outContent = jsonExercise.testOut?.length > 0 ? jsonExercise.testOut.replace(/"/g, '\\\"') : ''
+    fileContent =  `{"id": "${idTest}","content":"${outContent}"}`
     fs.writeFileSync(outputPath, fileContent)
     let tests= [{
         id: idTest,
@@ -409,7 +432,7 @@ function getTests(jsonExercise, uuidPath) {
 function getStatements(jsonExercise, uuidPath) {
     const statementPath = path.join(uuidPath, "statement.txt")
     const idStatement = uuid.v4()
-    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.question_txt.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.statement.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(statementPath, fileContent)
     let statements = [{
             id: idStatement,
@@ -423,7 +446,7 @@ function getStatements(jsonExercise, uuidPath) {
 function getLibraries(jsonExercise, uuidPath) {
     const librariesPath = path.join(uuidPath, "library.txt")
     const idLibraries = uuid.v4()
-    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.question_onfly.replace(/"/g, '\\\"')}"}`
+    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
     fs.writeFileSync(librariesPath, fileContent)
     let libraries = [{
         id: idLibraries,
