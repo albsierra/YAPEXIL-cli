@@ -342,10 +342,11 @@ async function validateSerializedExercise(argv) {
 }
 
 function getMetadatas(argv) {
-    let metadatas = []
+    let metadatas = [],
+        rows = argv.rows ? argv.rows : 0
     message("Creating metadata.json from: ", argv.from)
     let read_opts = { // https://docs.sheetjs.com/docs/api/parse-options/
-        sheetRows: 3
+        sheetRows: rows
     }
     var workbook = XLSX.readFile(argv.from, read_opts);
     let json_opts = {} //https://docs.sheetjs.com/docs/api/utilities/#array-of-objects-input
