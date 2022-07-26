@@ -407,39 +407,75 @@ function getSolutions(jsonExercise, uuidPath) {
 }
 
 function getTests(jsonExercise, uuidPath) {
-    const idTest = uuid.v4()
-    const inputPath = path.join(uuidPath, "in.txt")
-    const inContent = jsonExercise.testIn?.length > 0 ? jsonExercise.testIn.replace(/"/g, '\\\"') : '-- '
-    let fileContent =  `{"id": "${idTest}","content":"${inContent}"}`
-    fs.writeFileSync(inputPath, fileContent)
+    jsonExercise.tests = getTestItems(jsonExercise)
+    let tests = []
+    jsonExercise.tests.forEach((test, index, array) => {
+        let idTest = uuid.v4()
+        let inputPath = path.join(uuidPath, `in_${index}.txt`)
+        let inContent = test.in.length > 0 ? test.in.replace(/"/g, '\\\"') : '-- '
+        let fileContent =  `{"id": "${idTest}","content":"${inContent}"}`
+        fs.writeFileSync(inputPath, fileContent)
 
-    const outputPath = path.join(uuidPath, "out.txt")
-    const outContent = jsonExercise.testOut?.length > 0 ? jsonExercise.testOut.replace(/"/g, '\\\"') : ''
-    fileContent =  `{"id": "${idTest}","content":"${outContent.substr(0,15000)}"}`
-    fs.writeFileSync(outputPath, fileContent)
-    let tests= [{
-        id: idTest,
-        arguments: [],
-        weight: 5,
-        visible: true,
-        input: "in.txt",
-        output: "out.txt",
-        feedback: []
-    }]
+        let outputPath = path.join(uuidPath, `out_${index}.txt`)
+        let outContent = test.out.length > 0 ? test.out.replace(/"/g, '\\\"') : ''
+        fileContent =  `{"id": "${idTest}","content":"${outContent.substr(0,15000)}"}`
+        fs.writeFileSync(outputPath, fileContent)
+        tests.push({
+            id: idTest,
+            arguments: [],
+            weight: 5,
+            visible: true,
+            input: `in_${index}.txt`,
+            output: `out_${index}.txt`,
+            feedback: []
+        })
+    })
+    return tests
+}
+
+function getTestItems(jsonExercise) {
+    let tests = []
+    for(element in jsonExercise) {
+        if(element.startsWith("testIn")) {
+            let index = element.substr(element.indexOf("[") + 1, (element.indexOf("]") - element.indexOf("[")) - 1)
+            tests.push({
+                'in': jsonExercise[element],
+                'out': jsonExercise[element.replace("In", "Out")]
+            })
+        }
+    }
     return tests
 }
 
 function getStatements(jsonExercise, uuidPath) {
-    const statementPath = path.join(uuidPath, "statement.txt")
-    const idStatement = uuid.v4()
-    let fileContent =  `{"id": "${idStatement}","content":"${jsonExercise.statement.replace(/"/g, '\\\"')}"}`
-    fs.writeFileSync(statementPath, fileContent)
-    let statements = [{
-            id: idStatement,
-            pathname: "statement.txt",
-            nat_lang: "es",
-            format: "HTML"
-        }]
+    jsonExercise.statements = getStatementLanguages(jsonExercise)
+    let statements = []
+    jsonExercise.statements.forEach(statement => {
+        let statementPath = path.join(uuidPath, `statement_${statement.lang}.txt`)
+        let idStatement = uuid.v4()
+        let fileContent =  `{"id": "${idStatement}","content":"${statement.content.replace(/"/g, '\\\"')}"}`
+        fs.writeFileSync(statementPath, fileContent)
+        statements.push({
+                id: idStatement,
+                pathname: `statement_${statement.lang}.txt`,
+                nat_lang: statement.lang,
+                format: "HTML"
+            })
+    })
+    return statements
+}
+
+function getStatementLanguages(jsonExercise) {
+    let statements = []
+    for(element in jsonExercise) {
+        if(element.startsWith("statement")) {
+            let lang = element.substr(element.indexOf("[") + 1, (element.indexOf("]") - element.indexOf("[")) - 1)
+            statements.push({
+                'lang': lang,
+                'content': jsonExercise[element]
+            })
+        }
+    }
     return statements
 }
 
