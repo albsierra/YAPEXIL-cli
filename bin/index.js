@@ -415,7 +415,7 @@ function getTests(jsonExercise, uuidPath) {
 
     const outputPath = path.join(uuidPath, "out.txt")
     const outContent = jsonExercise.testOut?.length > 0 ? jsonExercise.testOut.replace(/"/g, '\\\"') : ''
-    fileContent =  `{"id": "${idTest}","content":"${outContent}"}`
+    fileContent =  `{"id": "${idTest}","content":"${outContent.substr(0,15000)}"}`
     fs.writeFileSync(outputPath, fileContent)
     let tests= [{
         id: idTest,
@@ -446,7 +446,13 @@ function getStatements(jsonExercise, uuidPath) {
 function getLibraries(jsonExercise, uuidPath) {
     const librariesPath = path.join(uuidPath, "library.txt")
     const idLibraries = uuid.v4()
-    let fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
+    let fileContent
+    if(jsonExercise.library.toLowerCase().startsWith("file:")) {
+        let schemaContent = fs.readFileSync(jsonExercise.library.substr(5))
+        fileContent = `{"id": "${idLibraries}","content":"${schemaContent}"}`
+    } else {
+        fileContent =  `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
+    }
     fs.writeFileSync(librariesPath, fileContent)
     let libraries = [{
         id: idLibraries,
