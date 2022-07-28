@@ -8,6 +8,7 @@ _YAPEXIL_ is a _JSON_ format in which the goal is to represent in an orthodoxy m
 
 - Packaging of exercises
 - Validation of a zip that represent an YAPEXIL exercise
+- Import and packaging of a set of exercises stored in a .ods spreadsheet
 ## Instaling
 First download the repository. Then in the folder where the package.json exists, run
 ```js
@@ -94,7 +95,14 @@ And by each file the content should be:
 Informing the ID of the resource and the content
 ![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success-create-http.png)
 ![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success-create.png)
-
+### Import from an .ods spreadsheet 
+```js
+YAPEXIL --import --out ~/Documents --from ~/Documents/ct_question.ods --rows=3 
+```
+```js
+YAPEXIL --import --out "file directory" --from "file name" [--rows=number]
+```
+An import [template file is provided](https://github.com/JuezLTI/YAPEXIL-cli/blob/master/resources/importTemplate.ods) to facilitate the import of questions.
 ## License
 
 MIT
