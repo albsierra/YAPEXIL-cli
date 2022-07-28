@@ -3,6 +3,7 @@
 const yargs = require('yargs')
 const chalk = require("chalk");
 const boxen = require("boxen");
+const crypto = require('crypto');
 const fs = require('fs');
 const chalkAnimation = require('chalk-animation');
 const axios = require('axios').default;
@@ -19,10 +20,226 @@ var promise = (new Promise((resolve, reject) => {
         message("YAPEXIL CLI", "Welcome", "green", "black")
     }, async(argv) => {
         out = argv.out;
+        await loadSchemaYAPEXIL();
+
+        try {
+
+            if ("modify" in argv) {
+                if ("exercise" in argv) {
+                    var exercise = await ProgrammingExercise.deserialize(path.join(__dirname, "../exercises/"), argv.exercise)
+
+                    if ("solution_remove" in argv) {
+                        if ("solution_id" in argv) {
+                            let new_solutions = []
+                            let new_solutions_content = {}
+
+                            exercise.solutions.forEach((element, index) => {
+                                if (element.id != argv.solution_id) {
+                                    new_solutions.push(element)
+                                    new_solutions_content[element.id] = exercise.solutions_contents[element.id]
+                                }
+
+                            })
+                            exercise.solutions = new_solutions
+                            exercise.solutions_contents = new_solutions_content
+
+                        } else {
+                            throw new Error("Please, supply a solution id to be removed ");
+
+                        }
+
+                    }
+
+
+                    if ("statement_remove" in argv) {
+                        if ("statement_id" in argv) {
+                            let new_statements = []
+                            let new_statements_content = {}
+
+                            exercise.statements.forEach((element, index) => {
+                                if (element.id != argv.statement_id) {
+                                    new_statements.push(element)
+                                    new_statements_content[element.id] = exercise.statements_contents[element.id]
+                                }
+
+                            })
+                            exercise.statements = new_statements
+                            exercise.statements_contents = new_statements_content
+
+                        } else {
+                            throw new Error("Please, supply a statement id to be removed ");
+
+                        }
+
+                    }
+
+                    if ("test_remove" in argv) {
+                        if ("test_id" in argv) {
+                            let new_tests = []
+                            let new_tests_contents_in = {}
+                            let new_tests_contents_out = {}
+
+                            exercise.tests.forEach((element, index) => {
+                                if (element.id != argv.test_id) {
+                                    new_tests.push(element)
+                                    new_tests_contents_in[element.id] = exercise.tests_contents_in[element.id]
+                                    new_tests_contents_out[element.id] = exercise.tests_contents_out[element.id]
+
+                                }
+
+                            })
+                            exercise.tests = new_tests
+                            exercise.tests_contents_in = new_tests_contents_in
+                            exercise.tests_contents_out = new_tests_contents_out
+
+
+                        } else {
+                            throw new Error("Please, supply a test id to be removed ");
+
+                        }
+
+                    }
+
+
+
+                    if ("solution_addition" in argv) {
+                        if ("solution_lang" in argv) {
+                            if ("solution_content" in argv) {
+                                let id = crypto.randomUUID()
+                                exercise.solutions.push({
+                                    id: id,
+                                    pathname: `solution.${argv.solution_lang}`,
+                                    lang: argv.solution_lang,
+                                })
+                                let content = fs.readFileSync(argv.solution_content, { encoding: 'utf8', flag: 'r' });
+                                exercise.solutions_contents[id] = content
+                            } else {
+                                throw new Error("Please, supply a solution content ");
+
+                            }
+
+                        } else {
+                            throw new Error("Please, supply a solution lang ");
+
+                        }
+                    }
+
+                    if ("statement_addition" in argv) {
+                        if ("statement_format" in argv) {
+                            if ("statement_nat_lang" in argv) {
+                                if ("statement_content" in argv) {
+
+                                    let id = crypto.randomUUID()
+                                    exercise.statements.push({
+                                        id: id,
+                                        pathname: `statment.${argv.statement_format}`,
+                                        nat_lang: argv.statement_nat_lang,
+                                        format: argv.statement_format,
+
+                                    })
+                                    let content = fs.readFileSync(argv.statement_content, { encoding: 'utf8', flag: 'r' });
+                                    exercise.statements_contents[id] = content
+                                } else {
+                                    throw new Error("Please, supply a  statement content ");
+
+                                }
+                            } else {
+                                throw new Error("Please, supply a  statement natural language ");
+
+                            }
+
+                        } else {
+                            throw new Error("Please, supply a  statement format ");
+
+                        }
+                    }
+
+
+
+                    if ("test_addition" in argv) {
+                        if ("test_visible" in argv) {
+                            if ("test_input_content" in argv) {
+                                if ("test_output_content" in argv) {
+
+                                    let id = crypto.randomUUID()
+                                    exercise.tests.push({
+                                        id: id,
+                                        arguments: [],
+                                        weight: 1,
+                                        visible: eval(argv.test_visible),
+                                        input: 'input.txt',
+                                        output: 'output.txt'
+
+                                    })
+                                    let content_in = fs.readFileSync(argv.test_input_content, { encoding: 'utf8', flag: 'r' });
+                                    let content_out = fs.readFileSync(argv.test_output_content, { encoding: 'utf8', flag: 'r' });
+                                    exercise.tests_contents_in[id] = content_in
+                                    exercise.tests_contents_out[id] = content_out
+
+                                } else {
+                                    throw new Error("Please, supply a  test output content  ");
+
+                                }
+                            } else {
+                                throw new Error("Please, supply a  test input content");
+
+                            }
+
+                        } else {
+                            throw new Error("Please, supply a  test visible (true/false) ");
+
+                        }
+                    }
+                    fs.unlinkSync(path.join(__dirname, "../exercises/", argv.exercise))
+                    console.log(exercise)
+                    exercise.serialize(path.join(__dirname, "../", "exercises"))
+
+
+
+                } else {
+                    throw new Error("Please, supply an exercise ");
+
+                }
+
+            }
+        } catch (msg) {
+            message("ERROR", msg, "red", "yellow")
+
+
+        }
+
+
         if ("create" in argv) {
+            var exercise = new ProgrammingExercise(undefined, true)
+            exercise.id = crypto.randomUUID()
+            if ("title" in argv) {
+                exercise.title = argv.title;
+
+            }
+            if ("keywords" in argv) {
+                exercise.keywords = argv.keywords.split("-");
+
+            }
+            if ("type" in argv) {
+                exercise.type = argv.type;
+
+            }
+            if ("author" in argv) {
+                exercise.author = argv.author;
+
+            }
+            if ("status" in argv) {
+                exercise.status = argv.status;
+
+            }
+            console.log(exercise)
+            exercise.serialize(path.join(__dirname, "../", "exercises"))
+
+        }
+
+        if ("packaging" in argv) {
             let data = fs.readFileSync(argv.dir, { encoding: 'utf8', flag: 'r' });
             data = JSON.parse(data)
-            await loadSchemaYAPEXIL();
             var exercise = new ProgrammingExercise(data)
             var arr = [],
                 solutionsContents = [],
@@ -183,16 +400,11 @@ var promise = (new Promise((resolve, reject) => {
 
                             }
 
-                            if (warning) {
-                                if (!argv.silent)
-                                    message("Warning!!!", text, "red", "black")
-                                resolve(2);
 
-                            } else {
-                                if (!argv.silent)
-                                    message("Success", "The tested YAPEXIL exercise is valid and does not have any extra files", "green", "black")
-                                resolve(0);
-                            }
+                            if (!argv.silent)
+                                message("Success", "This excercise is a valid YAPEXIL exercise", "green", "black")
+                            resolve(0);
+
 
                         });
                     });
