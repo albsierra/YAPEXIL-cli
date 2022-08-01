@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<event>
+	<data>
+		<organization name="Club deportivo Carlos III" email="clubdeportivo@cifpcarlos3.es"/>
+		<title>Trail+MB Carlos III</title>
+		<location city="Cartagena" county="Murcia" />
+		<timing date="2019-06-05" duration="8" />
+	</data>
+</event>

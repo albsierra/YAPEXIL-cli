@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<event>
+	<data>
+		<organization name="Club deportivo Carlos III" email="clubdeportivo@cifpcarlos3.es"/>
+		<title>Trail+MB Carlos III</title>
+		<location city="Cartagena" county="Murcia" />
+		<timing date="2019-06-05" duration="8" />
+	</data>
+	<modalities>
+		<modality id="TRL14" name="Short Trail 14Km" distance="14.1" start="10:00:00">
+			Hiking test aimed at all audiences.
+		</modality>
+		<modality id="TRL31" name="Long Trail 31Km" distance="30.9" start="09:00:00" elevation="1050">
+			<provisioning>
+				<provpoint id="TRL31A1" kmpoint="7.3"/>
+				<provpoint id="TRL31A2" kmpoint="14.6"/>
+				<provpoint id="TRL31A3" kmpoint="26.9"/>
+			</provisioning>
+			Trail not suitable for untrained people.
+		</modality>
+		<modality id="MBK41" name="Mountain Bike 41Km" distance="41.1" start="09:30:00" elevation="1125">
+			<provisioning>
+				<provpoint id="BXM41A1" kmpoint="16.1"/>
+				<provpoint id="BXM41A2" kmpoint="30.7"/>
+			</provisioning>
+			Medium difficulty mountain bike race.
+		</modality>
+	</modalities>
+</event>

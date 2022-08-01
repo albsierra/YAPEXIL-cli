@@ -106,13 +106,41 @@ var promise = (new Promise((resolve, reject) => {
 
 
 
+
+                    if ("skeleton_addition" in argv) {
+                        if ("skeleton_lang" in argv) {
+                            if ("skeleton_content" in argv) {
+                                let id = crypto.randomUUID()
+                                exercise.skeletons = []
+                                exercise.skeletons_contents = {}
+
+                                exercise.skeletons.push({
+                                    id: id,
+                                    pathname: `skeleton_${crypto.randomUUID()}_.${argv.skeleton_lang}`,
+                                    lang: argv.skeleton_lang,
+                                })
+                                let content = fs.readFileSync(argv.skeleton_content, { encoding: 'utf8', flag: 'r' });
+                                exercise.skeletons_contents[id] = content
+                            } else {
+                                throw new Error("Please, supply a skeleton content ");
+
+                            }
+
+                        } else {
+                            throw new Error("Please, supply a skeleton lang ");
+
+                        }
+                    }
+
+
+
                     if ("solution_addition" in argv) {
                         if ("solution_lang" in argv) {
                             if ("solution_content" in argv) {
                                 let id = crypto.randomUUID()
                                 exercise.solutions.push({
                                     id: id,
-                                    pathname: `solution.${argv.solution_lang}`,
+                                    pathname: `solution_${crypto.randomUUID()}_.${argv.solution_lang}`,
                                     lang: argv.solution_lang,
                                 })
                                 let content = fs.readFileSync(argv.solution_content, { encoding: 'utf8', flag: 'r' });
@@ -136,7 +164,7 @@ var promise = (new Promise((resolve, reject) => {
                                     let id = crypto.randomUUID()
                                     exercise.statements.push({
                                         id: id,
-                                        pathname: `statment.${argv.statement_format}`,
+                                        pathname: `statment_${crypto.randomUUID() }_.${argv.statement_format}`,
                                         nat_lang: argv.statement_nat_lang,
                                         format: argv.statement_format,
 
@@ -159,26 +187,38 @@ var promise = (new Promise((resolve, reject) => {
                     }
 
 
-
                     if ("test_addition" in argv) {
-                        if ("test_visible" in argv) {
+                        if ("test_visibility" in argv) {
                             if ("test_input_content" in argv) {
                                 if ("test_output_content" in argv) {
-
                                     let id = crypto.randomUUID()
-                                    exercise.tests.push({
+
+                                    let obj = {
                                         id: id,
                                         arguments: [],
                                         weight: 1,
-                                        visible: eval(argv.test_visible),
+                                        visible: eval(argv.test_visibility),
                                         input: 'input.txt',
                                         output: 'output.txt'
+                                    }
+                                    if ("test_feedback" in argv) {
+                                        let feedback = []
+                                        argv.test_feedback.split('-').forEach((element) => {
+                                            let parsed = element.replaceAll('_', ' ')
+                                            feedback.push({ message: parsed, weight: 0 })
+                                        })
+                                        obj['feedback'] = feedback
 
-                                    })
+                                    } else {
+
+                                        obj['feedback'] = [{ message: "", weight: "0" }]
+                                    }
+                                    exercise.tests.push(obj)
                                     let content_in = fs.readFileSync(argv.test_input_content, { encoding: 'utf8', flag: 'r' });
                                     let content_out = fs.readFileSync(argv.test_output_content, { encoding: 'utf8', flag: 'r' });
                                     exercise.tests_contents_in[id] = content_in
                                     exercise.tests_contents_out[id] = content_out
+
 
                                 } else {
                                     throw new Error("Please, supply a  test output content  ");
@@ -195,7 +235,7 @@ var promise = (new Promise((resolve, reject) => {
                         }
                     }
                     fs.unlinkSync(path.join(__dirname, "../exercises/", argv.exercise))
-                    console.log(exercise)
+                    console.log("Done")
                     exercise.serialize(path.join(__dirname, "../", "exercises"))
 
 
@@ -234,7 +274,7 @@ var promise = (new Promise((resolve, reject) => {
                 exercise.status = argv.status;
 
             }
-            console.log(exercise)
+            console.log(exercise.id)
             exercise.serialize(path.join(__dirname, "../", "exercises"))
 
         }
@@ -634,7 +674,7 @@ function getTests(jsonExercise, uuidPath) {
 
         let outputPath = path.join(uuidPath, `out_${index}.txt`)
         let outContent = test.out.length > 0 ? test.out.replace(/"/g, '\\\"') : ''
-        fileContent = `{"id": "${idTest}","content":"${outContent.substr(0,15000)}"}`
+        fileContent = `{"id": "${idTest}","content":"${outContent.substr(0, 15000)}"}`
         fs.writeFileSync(outputPath, fileContent)
         tests.push({
             id: idTest,
