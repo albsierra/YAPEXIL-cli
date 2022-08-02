@@ -164,12 +164,22 @@ var promise = (new Promise((resolve, reject) => {
                                     let id = crypto.randomUUID()
                                     exercise.statements.push({
                                         id: id,
-                                        pathname: `statment_${crypto.randomUUID() }_.${argv.statement_format}`,
+                                        pathname: `statment_${crypto.randomUUID()}_.${argv.statement_format}`,
                                         nat_lang: argv.statement_nat_lang,
                                         format: argv.statement_format,
 
                                     })
-                                    let content = fs.readFileSync(argv.statement_content, { encoding: 'utf8', flag: 'r' });
+                                    let content;
+                                    if (argv.statement_format == "PDF") {
+                                        console.log("Aqui")
+                                        content = fs.readFileSync(argv.statement_content, { encoding: 'base64', flag: 'r' });
+
+                                    } else {
+                                        content = fs.readFileSync(argv.statement_content, { encoding: 'utf8', flag: 'r' });
+                                    }
+
+
+
                                     exercise.statements_contents[id] = content
                                 } else {
                                     throw new Error("Please, supply a  statement content ");
@@ -253,7 +263,14 @@ var promise = (new Promise((resolve, reject) => {
         }
         if ("create" in argv) {
             var exercise = new ProgrammingExercise(undefined, true)
-            exercise.id = crypto.randomUUID()
+
+            if ("id" in argv) {
+                exercise.id = argv.id;
+
+            } else {
+
+                exercise.id = crypto.randomUUID()
+            }
             if ("title" in argv) {
                 exercise.title = argv.title;
 
