@@ -15,6 +15,8 @@ const { create } = require('domain');
 const uuid = require('uuid');
 var XLSX = require("yxw-xlsx");
 
+let sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 var out;
 var promise = (new Promise((resolve, reject) => {
 
@@ -304,9 +306,9 @@ var promise = (new Promise((resolve, reject) => {
             if (result) resolve(result);
         } else if ("import" in argv) {
             if (from = argv.from) {
-                let metadatas = getMetadatas(argv)
+                let metadatas = await getMetadatas(argv)
                 let exercisesP = []
-                metadatas.forEach((metadata) => {
+                for( let metadata of metadatas) {
                     let argvCreate = {
                         _: [],
                         create: true,
@@ -316,7 +318,7 @@ var promise = (new Promise((resolve, reject) => {
                         '$0': 'YAPEXIL'
                     }
                     exercisesP.push(createFromMetadata(argvCreate))
-                })
+                }
                 Promise.all(exercisesP).then(exercises => {
                     if (exercises.length > 0)
                         resolve(exercises.length)
@@ -614,7 +616,7 @@ async function validateSerializedExercise(argv) {
 
 }
 
-function getMetadatas(argv) {
+async function getMetadatas(argv) {
     let metadatas = [],
         rows = argv.rows ? argv.rows : 0
     message("Creating metadata.json from: ", argv.from)
@@ -625,17 +627,19 @@ function getMetadatas(argv) {
     let json_opts = {} //https://docs.sheetjs.com/docs/api/utilities/#array-of-objects-input
     var jsonExercises = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], json_opts);
 
-    jsonExercises.forEach((jsonExercise) => {
+    for(let jsonExercise of jsonExercises) {
         const uuidExercise = uuid.v4()
         const uuidPath = path.join(argv.out, uuidExercise)
         fs.mkdirSync(uuidPath)
-        metadatas.push(parseJsonExercise(jsonExercise, uuidExercise, uuidPath))
-    })
+        let parsedJsonExercise = await parseJsonExercise(jsonExercise, uuidExercise, uuidPath)
+        metadatas.push(parsedJsonExercise)
+    }
     return metadatas
 }
 
-function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
+async function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
     const currentTime = (new Date()).toISOString();
+    let statements = await getStatements(jsonExercise, uuidPath)
     let metadata = {
         id: uuidExercise, // "c9d68b4f-e306-41f5-bba3-cafdcd024bfb",
         title: jsonExercise.title, // "Selecting all links to Google within a document",
@@ -656,7 +660,7 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
 
         tests: getTests(jsonExercise, uuidPath),
 
-        statements: getStatements(jsonExercise, uuidPath),
+        statements: statements,
 
         libraries: getLibraries(jsonExercise, uuidPath)
     }
@@ -720,13 +724,23 @@ function getTestItems(jsonExercise) {
     return tests
 }
 
-function getStatements(jsonExercise, uuidPath) {
+async function getStatements(jsonExercise, uuidPath) {
     jsonExercise.statements = getStatementLanguages(jsonExercise)
     let statements = []
-    jsonExercise.statements.forEach(statement => {
+    let originLang, originStatement, targetContent
+    for(let statement of jsonExercise.statements) {
+        if(!originLang) { // using first lang as the source for translation
+            originLang = statement.lang
+            originStatement = statement.content
+        }
         let statementPath = path.join(uuidPath, `statement_${statement.lang}.txt`)
         let idStatement = uuid.v4()
-        let fileContent = `{"id": "${idStatement}","content":"${statement.content.replace(/"/g, '\\\"')}"}`
+        if(statement.lang != originLang && statement.content.toLowerCase() == 'translate') {
+            targetContent = await translate(originStatement, originLang, statement.lang)
+        } else {
+            targetContent = statement.content
+        }
+        let fileContent = `{"id": "${idStatement}","content":"${targetContent.replace(/"/g, '\\\"')}"}`
         fs.writeFileSync(statementPath, fileContent)
         statements.push({
             id: idStatement,
@@ -734,7 +748,7 @@ function getStatements(jsonExercise, uuidPath) {
             nat_lang: statement.lang,
             format: "HTML"
         })
-    })
+    }
     return statements
 }
 
@@ -769,4 +783,16 @@ function getLibraries(jsonExercise, uuidPath) {
         type: "EMBEDDABLE"
     }]
     return libraries
+}
+
+async function translate(content, source, target) {
+    const res = await axios.post("https://libretranslate.com/translate", {
+        q: content,
+        source: source,
+        target: target,
+        format: "html",
+        api_key: process.env.TRANSLATE_KEY
+    });
+    await sleep(1000);
+    return(res.data?.translatedText);
 }
