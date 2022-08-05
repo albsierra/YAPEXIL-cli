@@ -18,83 +18,67 @@ sudo npm i --location=global
 ## Examples
 ### Validating an zip file 
 ```js
-YAPEXIL --validate --dir ./ --filename c9d68b4f-e306-41f5-bba3-cafdcd024bfb.zip 
+YAPEXIL --validate --dir ./exercises/ --exercise 8b5a8565-74ff-41a5-b7aa-8616042693fd.zip 
 ```
 ```js
-YAPEXIL --validate --dir "file directory" --filename "file name"
+YAPEXIL --validate --dir "file directory" --exercise "file name"
 ```
 
 
-Ex:
-![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/error.png)
-![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success.png)
-![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/warning.png)
 
-### Packaging an exercise
+### Creating an exercise
 ```js
-YAPEXIL --create --dir ./resources/metadata.json  --out ./ --base /mnt/c/Users/marco/Documents/TESTE
-```
-```js
-YAPEXIL --create --dir "meta file for the exercise"  --out "exercise zip output" --base "folder containing the necessary files for packaging a YAPEXIL exercise"
+
+
+YAPEXIL --create --id 9d85d08f-bb6b-4fd6-9e6b-9b4406453639 --author author_name --title Example --keywords xml-exercise-programing 
+--type IMPROVEMENT  --status DRAFT
+
+// The output of this command will be the ID exercise.
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --statement_addition --statement_format PDF --statement_nat_lang EN --statement_content ./resources/example/JuezLTI\ DTD+XSD\ Exercise\ example.pdf  
+
+//This command will add a statement
+
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip  --skeleton_addition --skeleton_lang xml --skeleton_content ./resources/example/SportEvents/base\ XML\ example/SportEvent.xml
+
+//This command will add a skeleton
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip  --library_addition  --library_content ./resources/example/SportEvents/base\ XML\ example/SportEvent.xml
+//This command will add a library
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --solution_addition --solution_lang xml --solution_content ./resources/example/SportEvents/solution.xml
+
+//This command will add a solution
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --test_addition --test_visibility true --test_input_content ./resources/example/SportEvents/test\ cases/SportEvent_Q01_1_valid.xml --test_output_content ./resources/example/SportEvents/output_valid.txt
+
+//This command will add a  test
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --test_addition --test_visibility true --test_input_content ./resources/example/SportEvents/test\ cases/SportEvent_Q01_2_invalid.xml --test_output_content ./resources/example/SportEvents/output_invalid.txt --test_feedback essa_e_uma_menssagem-esse_e_outra_menssagem-uma_terceira_:D
+
+//This command will add a  test
+
+
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --test_remove --test_id 00000000-0000-0000-0000-000000000000 --solution_remove --solution_id 00000000-0000-0000-0000-000000000000 --statement_remove --statement_id 00000000-0000-0000-0000-000000000000
+// This command will remove some default stuff
+
+
+
+
+
+**Combining all commands into one**
+
+YAPEXIL --modify --exercise 9d85d08f-bb6b-4fd6-9e6b-9b4406453639.zip --statement_addition --statement_format PDF --statement_nat_lang EN --statement_content ./resources/example/JuezLTI\ DTD+XSD\ Exercise\ example.pdf --skeleton --skeleton_addition --skeleton_lang xml --skeleton_content ./resources/example/SportEvents/base\ XML\ example/SportEvent.xml --solution_addition --solution_lang xml --solution_content ./resources/example/SportEvents/solution.xml --test_addition --test_visibility true --test_input_content ./resources/example/SportEvents/test\ cases/SportEvent_Q01_2_invalid.xml --test_output_content ./resources/example/SportEvents/output_invalid.txt --test_feedback essa_e_uma_menssagem-esse_e_outra_menssagem-uma_terceira_:D --library_addition  --library_content ./resources/example/SportEvents/base\ XML\ example/SportEvent.xml --test_remove --test_id 00000000-0000-0000-0000-000000000000 --solution_remove --solution_id 00000000-0000-0000-0000-000000000000 --statement_remove --statement_id 00000000-0000-0000-0000-000000000000
+
 ```
 
-Ex: The file metada.json contain the following:
-```json
-{
-    "id": "be3bf258-895f-4f5b-bbe9-b716d75f4261",
-    "title": "Totalling by key and numerical value",
-    "module": "",
-    "owner": "JuezLTI Erasmus+",
-    "keywords": [],
-    "type": "BLANK_SHEET",
-    "event": "",
-    "platform": "",
-    "difficulty": "AVERAGE",
-    "status": "DRAFT",
-    "timeout": 0,
-    "programmingLanguages": [
-        "xpath"
-    ],
-    "created_at": "2021-12-11T17:21:06.419Z",
-    "updated_at": "2021-12-11T17:21:06.419Z",
-    "author": "Mew",
-    "solutions": [{
-        "id": "00000000-0000-0000-0000-000000000000",
-        "pathname": "solution.txt",
-        "lang": "cpp"
-    }],
-    "tests": [{
-        "id": "00000000-0000-0000-0000-000000000000",
-        "arguments": [],
-        "weight": 5,
-        "visible": true,
-        "input": "input.txt",
-        "output": "output.txt"
-    }],
-    "statements": [{
-        "id": "00000000-0000-0000-0000-000000000000",
-        "pathname": "statement.txt",
-        "nat_lang": "en",
-        "format": "HTML"
-    }]
-}
-```
 
-Then inside the repository --base  must exist the files:
-```json
-total 0
--rwxrwxrwx 1 marco marco  66 Mar 23 18:49 input.txt
--rwxrwxrwx 1 marco marco  67 Mar 23 18:50 output.txt
--rwxrwxrwx 1 marco marco  68 Mar 23 18:50 solution.txt
--rwxrwxrwx 1 marco marco 387 Mar 23 18:50 statement.txt
-```
-And by each file the content should be:
-```json
- {"id": "00000000-0000-0000-0000-000000000000","content":"4"}
- ```
-Informing the ID of the resource and the content
-![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success-create-http.png)
-![N|Solid](https://raw.githubusercontent.com/zub4t/Static_files/main/success-create.png)
+
+
+
+
 ### Import from an .ods spreadsheet 
 ```js
 YAPEXIL --import --out ~/Documents --from ~/Documents/ct_question.ods --rows=3 
