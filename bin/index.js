@@ -20,7 +20,7 @@ var promise = (new Promise((resolve, reject) => {
 
 
     yargs.command('$0', 'YAPEXIL generator', () => {
-        message("YAPEXIL CLI", "Welcome", "green", "black")
+        //  message("YAPEXIL CLI", "Welcome", "green", "black")
     }, async(argv) => {
         await loadSchemaYAPEXIL();
         out = argv.out;
@@ -132,6 +132,26 @@ var promise = (new Promise((resolve, reject) => {
                         }
                     }
 
+                    if ("library_addition" in argv) {
+                        if ("library_content" in argv) {
+                            let id = crypto.randomUUID()
+                            exercise.libraries = []
+                            exercise.libraries_contents = {}
+                            exercise.libraries.push({
+                                id: id,
+                                pathname: `library_${crypto.randomUUID()}`,
+                                type: "LIBRARY",
+                            })
+                            let content = fs.readFileSync(argv.library_content, { encoding: 'utf8', flag: 'r' });
+                            exercise.libraries_contents[id] = content
+                        } else {
+                            throw new Error("Please, supply a skeleton content ");
+                        }
+
+                    }
+
+
+
 
 
                     if ("solution_addition" in argv) {
@@ -171,7 +191,7 @@ var promise = (new Promise((resolve, reject) => {
                                     })
                                     let content;
                                     if (argv.statement_format == "PDF") {
-                                        console.log("Aqui")
+
                                         content = fs.readFileSync(argv.statement_content, { encoding: 'base64', flag: 'r' });
 
                                     } else {
@@ -245,7 +265,6 @@ var promise = (new Promise((resolve, reject) => {
                         }
                     }
                     fs.unlinkSync(path.join(__dirname, "../exercises/", argv.exercise))
-                    console.log("Done")
                     exercise.serialize(path.join(__dirname, "../", "exercises"))
 
 
@@ -254,13 +273,14 @@ var promise = (new Promise((resolve, reject) => {
                     throw new Error("Please, supply an exercise ");
 
                 }
-
+                console.log(exercise.id)
             }
         } catch (msg) {
-            message("ERROR", msg, "red", "yellow")
 
+            console.error(msg)
 
         }
+
         if ("create" in argv) {
             var exercise = new ProgrammingExercise(undefined, true)
 
@@ -471,146 +491,9 @@ async function createFromMetadata(argv) {
 async function validateSerializedExercise(argv) {
 
     await loadSchemaYAPEXIL();
-    try {
-        ProgrammingExercise.deserialize(argv.dir, argv.filename).then((programmingExercise) => {
-            if (!ProgrammingExercise.isValid(programmingExercise)) {
+    let programmingExercise = await ProgrammingExercise.deserialize(argv.dir, argv.exercise)
+    console.log(ProgrammingExercise.isValid(programmingExercise))
 
-                throw 'Invalid Exercise';
-            }
-            //console.log(programmingExercise.solutions)
-            fs.readFile(path.join(argv.dir, argv.filename), function(err, data) {
-                if (err) throw err;
-                JSZip.loadAsync(data).then(function(zip) {
-                    const pSolutions = new Array();
-                    const pStatments = new Array();
-                    const pTests = new Array();
-                    const pLibraries = new Array();
-                    var solutionsArchiveCount = 0;
-                    var statementArchiveCount = 0;
-                    var testsArchiveCount = 0;
-                    var librariesArchiveCount = 0;
-
-                    var warning = false;
-                    var text = ""
-                    let files = Object.keys(zip.files);
-                    //console.log(files);
-                    //  console.log(("verifying solutions folder"))
-
-                    programmingExercise.solutions.forEach((solutions, index) => {
-                        pSolutions.push(solutions.id)
-                    })
-                    programmingExercise.statements.forEach((statements, index) => {
-                        pStatments.push(statements.id)
-                    })
-                    programmingExercise.tests.forEach((tests, index) => {
-                        pTests.push(tests.id)
-
-                    })
-                    programmingExercise.libraries.forEach((library, index) => {
-                        pLibraries.push(library.id)
-
-                    })
-                    files.forEach((element, index) => {
-                        if (element != "metadata.json") {
-                            if (element.indexOf("solutions/") == -1 &&
-                                element.indexOf("statements/") == -1 &&
-                                element.indexOf("tests/") == -1 &&
-                                element.indexOf("libraries/") == -1
-                            ) {
-                                warning = true
-                                text += `There is files in the root folder that differ from solutions/ statements/ tests/ libraries/`
-                            }
-
-                            if (element != "solutions/" && element.indexOf("solutions/") != -1) {
-                                if (!pSolutions.includes(getUUID(element))) {
-                                    warning = true
-                                    text += `There is solution with UUID ${element} declared in the meta file \n`
-                                }
-                                if (element.length > 47)
-                                    solutionsArchiveCount++;
-                                //console.log(element)
-                            }
-                            if (element != "statements/" && element.indexOf("statements/") != -1) {
-                                if (!pStatments.includes(getUUID(element))) {
-                                    warning = true
-                                    text += `There is statements with UUID ${element} declared in the meta file \n`
-                                }
-                                if (element.length > 48)
-                                    statementArchiveCount++
-                                    // console.log(element)
-                            }
-                            if (element != "tests/" && element.indexOf("tests/") != -1) {
-                                if (!pTests.includes(getUUID(element))) {
-                                    warning = true
-                                    text += `There is tests with UUID ${element} declared in the meta file \n`
-                                }
-                                if (element.length > 43)
-
-                                    testsArchiveCount++
-
-                            }
-
-                            if (element != "libraries/" && element.indexOf("libraries/") != -1) {
-                                if (!pLibraries.includes(getUUID(element))) {
-                                    warning = true
-                                    text += `There is library with UUID ${element} declared in the meta file \n`
-                                }
-                                if (element.length > 47)
-                                    librariesArchiveCount++;
-                                //console.log(element)
-                            }
-                        }
-
-                    })
-
-                    if (programmingExercise.solutions.length * 2 != solutionsArchiveCount) {
-                        warning = true
-                        text += `There is more files in solutions folder than declared\n`
-                    }
-                    if (programmingExercise.statements.length * 2 != statementArchiveCount) {
-                        warning = true
-
-                        text += `There is more statements in statements folder than declared \n`
-
-                    }
-
-                    if (programmingExercise.tests.length * 3 != testsArchiveCount) {
-                        // console.log(testsArchiveCount)
-                        //  console.log(programmingExercise.tests.length)
-                        warning = true
-                        text += `There are more tests in the tests folder than declared \n`
-
-                    }
-                    if (programmingExercise.libraries.length * 2 != librariesArchiveCount) {
-                        warning = true
-                        text += `There is more files in solutions folder than declared\n`
-                    }
-
-                    if (warning) {
-                        if (!argv.silent)
-                            message("Warning!!!", text, "red", "black")
-                        return (2);
-
-                    } else {
-                        if (!argv.silent)
-                            message("Success", "The tested YAPEXIL exercise is valid and does not have any extra files", "green", "black")
-                        return (0);
-                    }
-
-                });
-            });
-        }).catch((err) => {
-            console.log(err)
-            if (!argv.silent)
-                message("ERROR!!!", "The YAPEXIL exercise is invalid", "red", "black")
-            return (1);
-        });
-    } catch (err) {
-        console.log(err)
-        if (!argv.silent)
-            message("ERROR!!!", "The YAPEXIL exercise is invalid", "red", "black")
-        return (1);
-    }
 
 }
 
