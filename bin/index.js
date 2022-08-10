@@ -615,7 +615,7 @@ function getStatements(jsonExercise, uuidPath) {
             id: idStatement,
             pathname: `statement_${statement.lang}.txt`,
             nat_lang: statement.lang,
-            format: "HTML"
+            format: "html"
         })
     })
     return statements
