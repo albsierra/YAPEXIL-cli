@@ -786,13 +786,30 @@ function getLibraries(jsonExercise, uuidPath) {
 }
 
 async function translate(content, source, target) {
-    const res = await axios.post("https://libretranslate.com/translate", {
-        q: content,
-        source: source,
-        target: target,
-        format: "html",
-        api_key: process.env.TRANSLATE_KEY
-    });
-    await sleep(1000);
-    return(res.data?.translatedText);
+    let contentSplited = []
+    if(content.length > 1900) { // characters limit in libreTranslate API
+        contentSplited = content.split("</p>")
+    } else {
+        contentSplited.push(content)
+    }
+
+    if(content.length > 1900) {
+        for(let contentPiece in contentSplited) {
+            contentSplited[contentPiece] += "</p>"
+        }
+    }
+    var translatedText = ""
+    for(let contentPiece in contentSplited) {
+        await sleep(1000); // no more than request 80/min
+        const res = await axios.post("https://libretranslate.com/translate", {
+            q: contentSplited[contentPiece],
+            source: source,
+            target: target,
+            format: "html",
+            api_key: process.env.TRANSLATE_KEY
+        });
+        translatedText += res.data?.translatedText
+    }
+    console.log(translatedText)
+    return(translatedText);
 }
