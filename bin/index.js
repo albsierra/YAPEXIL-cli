@@ -627,6 +627,10 @@ async function getMetadatas(argv) {
     let json_opts = {} //https://docs.sheetjs.com/docs/api/utilities/#array-of-objects-input
     var jsonExercises = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], json_opts);
 
+    if(argv.initRow && argv.initRow > 0) {
+        jsonExercises.splice(0,argv.initRow)
+    }
+
     for(let jsonExercise of jsonExercises) {
         const uuidExercise = uuid.v4()
         const uuidPath = path.join(argv.out, uuidExercise)
@@ -746,7 +750,7 @@ async function getStatements(jsonExercise, uuidPath) {
             id: idStatement,
             pathname: `statement_${statement.lang}.txt`,
             nat_lang: statement.lang,
-            format: "html"
+            format: "HTML"
         })
     }
     return statements
