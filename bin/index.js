@@ -530,11 +530,11 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
         module: jsonExercise.module,
         owner: "JuezLTI Erasmus+",
         keywords: jsonExercise.keywords.split(','),
-        type: "BLANK_SHEET",
+        type: jsonExercise.type ? jsonExercise.type : "BLANK_SHEET",
         event: "",
-        platform: "PostgreSQL",
-        difficulty: "EASY",
-        status: "DRAFT",
+        platform: jsonExercise.platform,
+        difficulty: jsonExercise.difficulty ? jsonExercise.difficulty : "EASY",
+        status: jsonExercise.status ? jsonExercise.status : "DRAFT",
         timeout: 0,
         programmingLanguages: jsonExercise.programmingLanguages.split(','),
         created_at: currentTime, // "2021-12-11T17:21:06.419Z",
@@ -641,20 +641,23 @@ function getStatementLanguages(jsonExercise) {
 }
 
 function getLibraries(jsonExercise, uuidPath) {
-    const librariesPath = path.join(uuidPath, "library.txt")
-    const idLibraries = uuid.v4()
-    let fileContent
-    if (jsonExercise.library.toLowerCase().startsWith("file:")) {
-        let schemaContent = fs.readFileSync(jsonExercise.library.substr(5))
-        fileContent = `{"id": "${idLibraries}","content":"${schemaContent}"}`
-    } else {
-        fileContent = `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
+    let libraries = []
+        if(jsonExercise.library) {
+        const librariesPath = path.join(uuidPath, "library.txt")
+        const idLibraries = uuid.v4()
+        let fileContent
+        if (jsonExercise.library.toLowerCase().startsWith("file:")) {
+            let schemaContent = fs.readFileSync(jsonExercise.library.substr(5))
+            fileContent = `{"id": "${idLibraries}","content":"${schemaContent}"}`
+        } else {
+            fileContent = `{"id": "${idLibraries}","content":"${jsonExercise.library.replace(/"/g, '\\\"')}"}`
+        }
+        fs.writeFileSync(librariesPath, fileContent)
+        libraries = [{
+            id: idLibraries,
+            pathname: "library.txt",
+            type: "EMBEDDABLE"
+        }]
     }
-    fs.writeFileSync(librariesPath, fileContent)
-    let libraries = [{
-        id: idLibraries,
-        pathname: "library.txt",
-        type: "EMBEDDABLE"
-    }]
     return libraries
 }
