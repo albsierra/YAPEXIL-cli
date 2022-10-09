@@ -532,7 +532,7 @@ function parseJsonExercise(jsonExercise, uuidExercise, uuidPath) {
         keywords: jsonExercise.keywords.split(','),
         type: jsonExercise.type ? jsonExercise.type : "BLANK_SHEET",
         event: "",
-        platform: jsonExercise.platform,
+        platform: jsonExercise.platform ? jsonExercise.platform : "Code Test",
         difficulty: jsonExercise.difficulty ? jsonExercise.difficulty : "EASY",
         status: jsonExercise.status ? jsonExercise.status : "DRAFT",
         timeout: 0,
